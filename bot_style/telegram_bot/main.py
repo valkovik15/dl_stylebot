@@ -27,12 +27,11 @@ def send_prediction_on_photo(bot, update):
 
         # первая картинка, которая к нам пришла станет content image, а вторая style image
         content_image_stream = BytesIO()
+
         first_image_file[chat_id].download(out=content_image_stream)
         del first_image_file[chat_id]
-
         style_image_stream = BytesIO()
         image_file.download(out=style_image_stream)
-
         output = model.transfer_style(content_image_stream, style_image_stream)
 
         # теперь отправим назад фото
@@ -56,7 +55,7 @@ if __name__ == '__main__':
     # используем прокси, так как без него у меня ничего не работало.
     # если есть проблемы с подключением, то попробуйте убрать прокси или сменить на другой
     # проекси ищется в гугле как "socks4 proxy"
-    updater = Updater(token=token,  request_kwargs={'proxy_url': 'socks4://168.195.171.42:44880'})
+    updater = Updater(token=token)
 
     # В реализации большого бота скорее всего будет удобнее использовать Conversation Handler
     # вместо назначения handler'ов таким способом
