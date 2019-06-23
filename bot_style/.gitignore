@@ -1,2 +1,6 @@
 telegram_bot/telegram_token.py
-
+telegram_bot/val2017.zip
+telegram_bot/saved_models.zip
+telegram_bot/dataset
+telegram_bot/__pycache__/
+.idea

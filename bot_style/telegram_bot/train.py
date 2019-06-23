@@ -19,7 +19,7 @@ from vgg import Vgg16
 from config import *
 
 
-def check_paths(args):
+def check_paths():
     try:
         if not os.path.exists(save_model_dir):
             os.makedirs(save_model_dir)
@@ -30,7 +30,7 @@ def check_paths(args):
         sys.exit(1)
 
 
-def train(args):
+def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     np.random.seed(42)
@@ -110,11 +110,10 @@ def train(args):
             torch.save(transformer.state_dict(), ckpt_model_path)
             transformer.to(device).train()
 
-
     # save model
     transformer.eval().cpu()
     save_model_filename = "epoch_" + str(epochs) + "_" + str(time.ctime()).replace(' ', '_') + "_" + str(
-    content_weight) + "_" + str(style_weight) + ".model"
+        content_weight) + "_" + str(style_weight) + ".model"
     save_model_path = os.path.join(save_model_dir, save_model_filename)
     torch.save(transformer.state_dict(), save_model_path)
 
@@ -149,12 +148,8 @@ def stylize(model):
 
 
 def main():
-    args = "./models/epoch_5_Wed_Jun_19_22:19:06_2019_1_1000000.model"
-    if args == "train":
-        check_paths(args)
-        train(args)
-    else:
-        stylize(args)
+    check_paths()
+    train()
 
 
 if __name__ == "__main__":

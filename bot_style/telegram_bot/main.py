@@ -131,6 +131,10 @@ def main_menu_keyboard():
     return telegram.InlineKeyboardMarkup(keyboard)
 
 
+def help_callback(bot, update):
+    update.message.reply_text("This bot can either transfer style of your own photo to the other picture, or execute a fast style tranfer with prepared photos. Use /start to begin")
+
+
 if __name__ == '__main__':
     from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, CallbackQueryHandler, ConversationHandler
     import logging
@@ -139,10 +143,8 @@ if __name__ == '__main__':
     logging.basicConfig(
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         level=logging.INFO)
-    # используем прокси, так как без него у меня ничего не работало.
-    # если есть проблемы с подключением, то попробуйте убрать прокси или сменить на другой
-    # проекси ищется в гугле как "socks4 proxy"
     updater = Updater(token=token)
+    dispatcher = updater.dispatcher
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
@@ -158,6 +160,6 @@ if __name__ == '__main__':
         fallbacks=[CommandHandler('start', start)]
     )
 
-    updater.dispatcher.add_handler(conv_handler)
-
+    dispatcher.add_handler(conv_handler)
+    dispatcher.add_handler(CommandHandler("help", help_callback))
     updater.start_polling()
