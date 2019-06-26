@@ -6,12 +6,9 @@ import torch.optim as optim
 import torchvision.transforms as transforms
 import torchvision.models as models
 import copy
-from scipy import misc
-
+from train_config import *
 
 # В данном классе мы хотим полностью производить всю обработку картинок, которые поступают к нам из телеграма.
-# Это всего лишь заготовка, поэтому не стесняйтесь менять имена функций, добавлять аргументы, свои классы и
-# все такое.
 class StyleLoss(nn.Module):
     def __init__(self, target_feature):
         super(StyleLoss, self).__init__()
@@ -83,7 +80,7 @@ class StyleTransferModel:
         self.style_layers_default = ['conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5']
         self.normalization_mean = torch.tensor([0.485, 0.456, 0.406]).to(self.device)
         self.normalization_std = torch.tensor([0.229, 0.224, 0.225]).to(self.device)
-        # Сюда необходимо перенести всю иницализацию, вроде загрузки свеерточной сети и т.д.
+        self.image_size=image_size
 
     def get_style_model_and_losses(self, style_img, content_img
                                    ):
@@ -216,16 +213,11 @@ class StyleTransferModel:
     # принято ставить _ (выглядит это так: def _foo() )
     # Эта функция тоже не является
     def process_image(self, img_stream):
-        # TODO размер картинки, device и трансформации не меняются в течении всей работы модели,
-        # поэтому их нужно перенести в конструктор!
-        imsize = 256
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(device)
         loader = transforms.Compose([
-            transforms.Resize((imsize, imsize)),  # нормируем размер изображения
+            transforms.Resize((self.image_size, self.image_size)),  # нормируем размер изображения
             #transforms.CenterCrop(imsize),
             transforms.ToTensor()])  # превращаем в удобный формат
 
         image = Image.open(img_stream)
         image = loader(image).unsqueeze(0)
-        return image.to(device, torch.float)
+        return image.to(self.device, torch.float)

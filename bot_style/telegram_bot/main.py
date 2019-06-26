@@ -1,22 +1,17 @@
-from model import StyleTransferModel
-from telegram_token import token
-import numpy as np
-from PIL import Image
+# from model import StyleTransferModel
+# from telegram_token import token
 from io import BytesIO
 import telegram
 from fast_style import FastStylizer
-
-# В бейзлайне пример того, как мы можем обрабатывать две картинки, пришедшие от пользователя.
-# При реалиазации первого алгоритма это Вам не понадобится, так что можете убрать загрузку второй картинки.
-# Если решите делать модель, переносящую любой стиль, то просто вернете код)
-
-model = StyleTransferModel()
+import os
+token = os.getenv("TOKEN") #Получаем из переменных Heroku
+# model = StyleTransferModel()
 fast_model = FastStylizer()
-first_image_file = {}
-model_list = {}
+#first_image_file = {}
+model_list = {} #Соответствие юзер - модель
 FIRST, SECOND, THIRD, OWN_STYLE, FAST, PHOTO_WAIT = range(6)
-
-
+# HEROKU не потянул:(
+'''
 def send_prediction_on_photo(bot, update):
     # Нам нужно получить две картинки, чтобы произвести перенос стиля, но каждая картинка приходит в
     # отдельном апдейте, поэтому в простейшем случае мы будем сохранять id первой картинки в память,
@@ -47,9 +42,11 @@ def send_prediction_on_photo(bot, update):
         print("Sent Photo to user")
     else:
         first_image_file[chat_id] = image_file
+'''
 
 
 def send_prediction_on_photo_fast(bot, update):
+    '''Прогонка изображений через объект FastModel'''
     chat_id = update.message.chat_id
     print("Got image from {}".format(chat_id))
 
@@ -66,21 +63,15 @@ def send_prediction_on_photo_fast(bot, update):
     output.save(output_stream, format='PNG')
     output_stream.seek(0)
     bot.send_photo(chat_id, photo=output_stream)
-    print("Sent Photo to user")
+    bot.send_message(chat_id,
+                     text="Thank you, come again!. Use /start to change model. Or send another photo and I will apply current style to it")
 
 
 def start(bot, update):
+    '''Вывод главного меню'''
     update.message.reply_text(main_menu_message(),
                               reply_markup=main_menu_keyboard())
     return THIRD
-
-
-def main_menu(bot, update):
-    query = update.callback_query
-    bot.edit_message_text(chat_id=query.message.chat_id,
-                          message_id=query.message.message_id,
-                          text=main_menu_message(),
-                          reply_markup=main_menu_keyboard())
 
 
 def main_menu_message():
@@ -88,6 +79,7 @@ def main_menu_message():
 
 
 def first(bot, update):
+    '''Обработчик первого пункта меню'''
     print("FIRST")
     query = update.callback_query
     bot.edit_message_text(
@@ -99,6 +91,7 @@ def first(bot, update):
 
 
 def second(bot, update):
+    '''Обработчик второго пункта меню'''
     print("SECOND")
     query = update.callback_query
     bot.edit_message_text(
@@ -110,6 +103,7 @@ def second(bot, update):
 
 
 def set_model(bot, update):
+    '''Достаем из запроса выбор пользователем стиля'''
     print("SMODEL")
     query = update.callback_query
     print(query)
@@ -120,19 +114,44 @@ def set_model(bot, update):
 
 
 def models_menu_keyboard():
-    keyboard = [[telegram.InlineKeyboardButton('Candy', callback_data="Candy")],
-                [telegram.InlineKeyboardButton('Starry night', callback_data="Starry")]]
+    '''Формирование меню для стиля'''
+    keyboard = [[telegram.InlineKeyboardButton('Amadeo', callback_data="Amadeo")],
+        [telegram.InlineKeyboardButton('Candy', callback_data="Candy")],
+                [telegram.InlineKeyboardButton('Starry night by Van Gogh', callback_data="Starry")],
+                [telegram.InlineKeyboardButton('Princess', callback_data="Princess")],
+                [telegram.InlineKeyboardButton('Mosaic', callback_data="Mosaic")],
+                [telegram.InlineKeyboardButton('Udnie', callback_data="Udnie")],
+                [telegram.InlineKeyboardButton('Monet', callback_data="Monet")],
+                [telegram.InlineKeyboardButton('Scream by Munk', callback_data="Munk")],
+                [telegram.InlineKeyboardButton('Paul Sérusier', callback_data="Serusier")],
+                [telegram.InlineKeyboardButton('Gogen', callback_data="Gogen")],
+                [telegram.InlineKeyboardButton('Petrov-Vodkin', callback_data="Petrov-Vodkin")],
+                [telegram.InlineKeyboardButton('On a wild North by Shishkin', callback_data="Winter")]]
     return telegram.InlineKeyboardMarkup(keyboard)
 
 
 def main_menu_keyboard():
+    '''Формирование главного меню'''
     keyboard = [[telegram.InlineKeyboardButton('Use own style', callback_data=str(FIRST))],
                 [telegram.InlineKeyboardButton('Use pre-trained models', callback_data=str(SECOND))]]
     return telegram.InlineKeyboardMarkup(keyboard)
 
 
 def help_callback(bot, update):
-    update.message.reply_text("This bot can either transfer style of your own photo to the other picture, or execute a fast style tranfer with prepared photos. Use /start to begin")
+    '''Обработчик команды /help'''
+    update.message.reply_text(
+        "This bot can either transfer style of your own photo to the other picture, or execute a fast style tranfer with prepared photos. Use /start to begin")
+
+
+def donate(bot, update):
+    '''Будем вызывать, если запускается не на локальной машине(т.е. будем)'''
+    query = update.callback_query
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text="Oh, I can do this, but my servers can't:( Try my pretrained models",
+        reply_markup=models_menu_keyboard())
+    return SECOND
 
 
 if __name__ == '__main__':
@@ -151,9 +170,10 @@ if __name__ == '__main__':
         states={
             FIRST: [CallbackQueryHandler(first)],
             SECOND: [CallbackQueryHandler(second)],
-            THIRD: [CallbackQueryHandler(first, pattern=str(FIRST)),
+            THIRD: [CallbackQueryHandler(donate, pattern=str(FIRST)),
                     CallbackQueryHandler(second)],
-            OWN_STYLE: [MessageHandler(Filters.photo, send_prediction_on_photo)],
+            OWN_STYLE: [CallbackQueryHandler(donate, pattern=str(FIRST))],
+            # OWN_STYLE: [MessageHandler(Filters.photo, send_prediction_on_photo)], Нормальный обработчик для своего стиля
             FAST: [CallbackQueryHandler(set_model, pattern='^.+$')],
             PHOTO_WAIT: [MessageHandler(Filters.photo, send_prediction_on_photo_fast)]
         },
@@ -162,4 +182,9 @@ if __name__ == '__main__':
 
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(CommandHandler("help", help_callback))
-    updater.start_polling()
+    PORT = int(os.environ.get("PORT", "8443")) ###Избегаем ошибки Heroku R10
+    HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME")
+    updater.start_webhook(listen="0.0.0.0",
+                          port=PORT,
+                          url_path=token)
+    updater.bot.set_webhook("https://{}.herokuapp.com/{}".format(HEROKU_APP_NAME, token))

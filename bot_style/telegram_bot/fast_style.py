@@ -1,37 +1,28 @@
-import os
-import sys
-import time
 import re
 from PIL import Image
-import numpy as np
 import torch
-from torch.optim import Adam
-from torch.utils.data import DataLoader
-from torchvision import datasets
 from torchvision import transforms
 import torch.onnx
-
 from utils import *
 from transformer import TransformerNet
-from vgg import Vgg16
-
-from config import *
-
-
+from deploy_config import *
 class FastStylizer():
+    '''Класс, производящий перенос стиля'''
+
     def __init__(self):
+        '''Инициализация всех доступных моделей в словарь'''
         self.zoo = {}
         for key in model_paths:
             self.zoo.update([(key, torch.load(model_paths[key]))])
 
     def stylize(self, key, image):
+        '''Перенос стиля с помощью предобученного TransformNeta'''
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        #content_image = image_path
-        #content_image = utils.load_image(content_image)
-        content_image=Image.open(image)
+
+        content_image = Image.open(image)
         loader = transforms.Compose([
             transforms.ToTensor()])  # превращаем в удобный формат
-        content_image=loader(content_image)
+        content_image = loader(content_image)
         print(content_image)
         content_transform = transforms.Compose([
             transforms.ToPILImage(),
