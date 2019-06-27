@@ -4,13 +4,14 @@ from io import BytesIO
 import telegram
 from fast_style import FastStylizer
 import os
-token = os.getenv("TOKEN") #Получаем из переменных Heroku
+
+token = os.getenv("TOKEN")  # Получаем из переменных Heroku
 # model = StyleTransferModel()
 fast_model = FastStylizer()
-#first_image_file = {}
-model_list = {} #Соответствие юзер - модель
+# first_image_file = {}
+model_list = {}  # Соответствие юзер - модель
 FIRST, SECOND, THIRD, OWN_STYLE, FAST, PHOTO_WAIT = range(6)
-# HEROKU не потянул:(
+# HEROKU не потянул:( А Google Cloud похоже не дает личных  аккаунтов в Беларуси. При локальном запуске все работало                                                                                                                                                                  аккаунтов в Беларуси
 '''
 def send_prediction_on_photo(bot, update):
     # Нам нужно получить две картинки, чтобы произвести перенос стиля, но каждая картинка приходит в
@@ -64,7 +65,7 @@ def send_prediction_on_photo_fast(bot, update):
     output_stream.seek(0)
     bot.send_photo(chat_id, photo=output_stream)
     bot.send_message(chat_id,
-                     text="Thank you, come again!. Use /start to change model. Or send another photo and I will apply current style to it")
+                     text="Thank you, come again! Use /start to change model. Or send another photo and I will apply current style to it")
 
 
 def start(bot, update):
@@ -80,7 +81,6 @@ def main_menu_message():
 
 def first(bot, update):
     '''Обработчик первого пункта меню'''
-    print("FIRST")
     query = update.callback_query
     bot.edit_message_text(
         chat_id=query.message.chat_id,
@@ -92,21 +92,18 @@ def first(bot, update):
 
 def second(bot, update):
     '''Обработчик второго пункта меню'''
-    print("SECOND")
     query = update.callback_query
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text="Now, pick the style",
+        text="Now, pick the style and then upload a photo",
         reply_markup=models_menu_keyboard())
     return FAST
 
 
 def set_model(bot, update):
     '''Достаем из запроса выбор пользователем стиля'''
-    print("SMODEL")
     query = update.callback_query
-    print(query)
     chat_id = query.message.chat_id
     model_name = query.data
     model_list.update([(chat_id, model_name)])
@@ -115,19 +112,26 @@ def set_model(bot, update):
 
 def models_menu_keyboard():
     '''Формирование меню для стиля'''
-    keyboard = [[telegram.InlineKeyboardButton('Amadeo', callback_data="Amadeo")],
-        [telegram.InlineKeyboardButton('Candy', callback_data="Candy")],
-                [telegram.InlineKeyboardButton('Starry night by Van Gogh', callback_data="Starry")],
-                [telegram.InlineKeyboardButton('Princess', callback_data="Princess")],
-                [telegram.InlineKeyboardButton('Mosaic', callback_data="Mosaic")],
-                [telegram.InlineKeyboardButton('Udnie', callback_data="Udnie")],
-                [telegram.InlineKeyboardButton('Monet', callback_data="Monet")],
-                [telegram.InlineKeyboardButton('Scream by Munk', callback_data="Munk")],
-                [telegram.InlineKeyboardButton('Paul Sérusier', callback_data="Serusier")],
-                [telegram.InlineKeyboardButton('Gogen', callback_data="Gogen")],
-                [telegram.InlineKeyboardButton('Petrov-Vodkin', callback_data="Petrov-Vodkin")],
-                [telegram.InlineKeyboardButton('On a wild North by Shishkin', callback_data="Winter")]]
-    return telegram.InlineKeyboardMarkup(keyboard)
+    keyboard = [[telegram.InlineKeyboardButton('Amedeo Modigliani', callback_data="Amadeo"),
+                 telegram.InlineKeyboardButton('Candy', callback_data="Candy")],
+                [telegram.InlineKeyboardButton('Starry night by Van Gogh', callback_data="Starry"),
+                 telegram.InlineKeyboardButton('Rain Princess by Leonid Afremov', callback_data="Princess")],
+                [telegram.InlineKeyboardButton('Mosaic', callback_data="Mosaic"),
+                 telegram.InlineKeyboardButton('Udnie by Francis Picabia', callback_data="Udnie")],
+                [telegram.InlineKeyboardButton('Claude Monet', callback_data="Monet"),
+                 telegram.InlineKeyboardButton('Scream by Edvard Munch', callback_data="Munk")],
+                [telegram.InlineKeyboardButton('Paul Sérusier', callback_data="Serusier"),
+                 telegram.InlineKeyboardButton('Paul Gogen', callback_data="Gogen")],
+                [telegram.InlineKeyboardButton('Kuzma Petrov-Vodkin', callback_data="Petrov-Vodkin"),
+                 telegram.InlineKeyboardButton('Vasiliy Kandinsky', callback_data="Kandinsky")],
+                [telegram.InlineKeyboardButton('Alfons Mucha', callback_data="Mucha"),
+                 telegram.InlineKeyboardButton('Dance by Henry Matisse', callback_data="Matisse")],
+                [telegram.InlineKeyboardButton('On a wild North by Shishkin', callback_data="Winter"),
+                 telegram.InlineKeyboardButton('Demon by Mihail Vrubel', callback_data="Vrubel")],
+                [telegram.InlineKeyboardButton('Girl on ball by Picasso', callback_data="Picasso"),
+                 telegram.InlineKeyboardButton('Frida', callback_data="Frida")]
+                ]
+    return telegram.InlineKeyboardMarkup(keyboard, one_time_keyboard=True)
 
 
 def main_menu_keyboard():
@@ -151,7 +155,7 @@ def donate(bot, update):
         message_id=query.message.message_id,
         text="Oh, I can do this, but my servers can't:( Try my pretrained models",
         reply_markup=models_menu_keyboard())
-    return SECOND
+    return FAST
 
 
 if __name__ == '__main__':
@@ -182,7 +186,7 @@ if __name__ == '__main__':
 
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(CommandHandler("help", help_callback))
-    PORT = int(os.environ.get("PORT", "8443")) ###Избегаем ошибки Heroku R10
+    PORT = int(os.environ.get("PORT", "8443"))  ###Избегаем ошибки Heroku R10
     HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME")
     updater.start_webhook(listen="0.0.0.0",
                           port=PORT,

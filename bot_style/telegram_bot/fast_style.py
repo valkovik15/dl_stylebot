@@ -23,7 +23,6 @@ class FastStylizer():
         loader = transforms.Compose([
             transforms.ToTensor()])  # превращаем в удобный формат
         content_image = loader(content_image)
-        print(content_image)
         content_transform = transforms.Compose([
             transforms.ToPILImage(),
             transforms.Resize(resize_size),
